@@ -30,7 +30,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-2xl font-bold text-blue-600 mb-2">Bible Quiz (NIV)</h1>
-            <p class="text-gray-500 text-sm">Fill in the blanks</p>
+            <p class="text-gray-500 text-sm">Fill in the blanks with hints</p>
             <!-- Progress Bar -->
             <div class="w-full bg-gray-200 h-2 rounded-full mt-4 overflow-hidden">
                 <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
@@ -40,7 +40,7 @@
         <!-- Quiz Content Section -->
         <div id="quiz-container">
             <!-- Verse Text -->
-            <div id="verse-display" class="mb-6 leading-relaxed text-lg text-gray-800 italic text-center min-h-[120px] flex flex-col justify-center">
+            <div id="verse-display" class="mb-6 leading-relaxed text-lg text-gray-800 italic text-center min-h-[140px] flex flex-col justify-center">
                 <!-- Verse will be injected here -->
             </div>
 
@@ -48,16 +48,23 @@
             <div class="space-y-4">
                 <input type="text" id="answer-input" 
                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition-colors text-center text-lg"
-                       placeholder="Type the missing word" autocomplete="off">
+                       placeholder="Type the word" autocomplete="off">
                 
-                <button onclick="checkAnswer()" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all active:scale-95">
-                    Check Answer
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="showHint()" 
+                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-3 rounded-xl transition-all">
+                        💡 Hint
+                    </button>
+                    <button onclick="checkAnswer()" 
+                            class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all active:scale-95">
+                        Check Answer
+                    </button>
+                </div>
             </div>
 
-            <!-- Feedback Message -->
-            <div id="feedback" class="mt-4 text-center font-semibold min-h-[1.5rem]"></div>
+            <!-- Hint & Feedback Message -->
+            <div id="hint-text" class="mt-4 text-center text-sm text-amber-600 font-medium min-h-[1.2rem]"></div>
+            <div id="feedback" class="mt-2 text-center font-semibold min-h-[1.5rem]"></div>
         </div>
 
         <!-- Result Screen -->
@@ -80,52 +87,62 @@
             {
                 verse: '"For God so _______ the world that he gave his one and only Son..."',
                 answer: 'loved',
-                ref: 'John 3:16'
+                ref: 'John 3:16',
+                hint: 'A strong feeling of deep affection (Starts with "L")'
             },
             {
                 verse: '"In the beginning God _______ the heavens and the earth."',
                 answer: 'created',
-                ref: 'Genesis 1:1'
+                ref: 'Genesis 1:1',
+                hint: 'To make something out of nothing (Starts with "C")'
             },
             {
                 verse: '"I can do all this through him who gives me _______."',
                 answer: 'strength',
-                ref: 'Philippians 4:13'
+                ref: 'Philippians 4:13',
+                hint: 'The quality of being physically or mentally strong'
             },
             {
                 verse: '"The Lord is my _______, I lack nothing."',
                 answer: 'shepherd',
-                ref: 'Psalm 23:1'
+                ref: 'Psalm 23:1',
+                hint: 'A person who looks after sheep'
             },
             {
                 verse: '"Trust in the Lord with all your heart and lean not on your own _______."',
                 answer: 'understanding',
-                ref: 'Proverbs 3:5'
+                ref: 'Proverbs 3:5',
+                hint: 'The ability to comprehend something'
             },
             {
                 verse: '"And we know that in all things God works for the _______ of those who love him."',
                 answer: 'good',
-                ref: 'Romans 8:28'
+                ref: 'Romans 8:28',
+                hint: 'Something that is beneficial or virtuous'
             },
             {
                 verse: '"Therefore go and make _______ of all nations..."',
                 answer: 'disciples',
-                ref: 'Matthew 28:19'
+                ref: 'Matthew 28:19',
+                hint: 'Followers or students of a teacher (Starts with "D")'
             },
             {
                 verse: '"For it is by _______ you have been saved, through faith..."',
                 answer: 'grace',
-                ref: 'Ephesians 2:8'
+                ref: 'Ephesians 2:8',
+                hint: 'The free and unmerited favor of God (Starts with "G")'
             },
             {
                 verse: '"So do not _______, for I am with you; do not be dismayed, for I am your God."',
                 answer: 'fear',
-                ref: 'Isaiah 41:10'
+                ref: 'Isaiah 41:10',
+                hint: 'To be afraid of something'
             },
             {
                 verse: '"Be strong and _______ . Do not be afraid; do not be discouraged..."',
                 answer: 'courageous',
-                ref: 'Joshua 1:9'
+                ref: 'Joshua 1:9',
+                hint: 'Brave, not deterred by danger (Starts with "C")'
             }
         ];
 
@@ -135,6 +152,7 @@
         const verseDisplay = document.getElementById('verse-display');
         const answerInput = document.getElementById('answer-input');
         const feedback = document.getElementById('feedback');
+        const hintText = document.getElementById('hint-text');
         const progressBar = document.getElementById('progress-bar');
         const quizContainer = document.getElementById('quiz-container');
         const resultContainer = document.getElementById('result-container');
@@ -159,7 +177,14 @@
             answerInput.value = '';
             answerInput.focus();
             feedback.textContent = '';
+            hintText.textContent = ''; // Reset hint
             updateProgress();
+        }
+
+        function showHint() {
+            const currentQuiz = bibleQuizzes[currentIndex];
+            hintText.textContent = `Hint: ${currentQuiz.hint}`;
+            hintText.classList.add('fade-in');
         }
 
         function updateProgress() {
@@ -176,10 +201,10 @@
             if (userAnswer === correctAnswer) {
                 score++;
                 feedback.textContent = "✨ Correct!";
-                feedback.className = "mt-4 text-center font-semibold text-green-500 fade-in";
+                feedback.className = "mt-2 text-center font-semibold text-green-500 fade-in";
             } else {
                 feedback.textContent = `❌ Incorrect. (Answer: ${bibleQuizzes[currentIndex].answer})`;
-                feedback.className = "mt-4 text-center font-semibold text-red-500 fade-in";
+                feedback.className = "mt-2 text-center font-semibold text-red-500 fade-in";
             }
 
             // Move to next question after 1.5s
@@ -204,6 +229,7 @@
             initQuiz();
         }
 
+        // Handle Enter key
         answerInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 checkAnswer();
