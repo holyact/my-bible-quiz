@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Bible Quiz - NIV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .quiz-card {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-md bg-white rounded-3xl quiz-card p-8 fade-in">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-blue-600 mb-2">Bible Quiz</h1>
+            <p class="text-gray-500 text-sm">Fill in the blanks (NIV)</p>
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 h-2 rounded-full mt-4 overflow-hidden">
+                <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Content Section -->
+        <div id="quiz-container">
+            <!-- Verse Text -->
+            <div id="verse-display" class="mb-6 leading-relaxed text-lg text-gray-800 italic text-center">
+                <!-- Verse will be injected here -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="space-y-4">
+                <input type="text" id="answer-input" 
+                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition-colors text-center text-lg"
+                       placeholder="Type the missing word" autocomplete="off">
+                
+                <button onclick="checkAnswer()" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all active:scale-95">
+                    Check Answer
+                </button>
+            </div>
+
+            <!-- Feedback Message -->
+            <div id="feedback" class="mt-4 text-center font-semibold min-h-[1.5rem]"></div>
+        </div>
+
+        <!-- Result Screen (Hidden by default) -->
+        <div id="result-container" class="hidden text-center space-y-6">
+            <div class="text-5xl">🎉</div>
+            <h2 class="text-2xl font-bold">Great Job!</h2>
+            <p class="text-gray-600">You've completed the quiz.</p>
+            <div class="bg-blue-50 p-4 rounded-2xl">
+                <p class="text-blue-800 font-bold text-xl">Score: <span id="final-score">0</span> / 3</p>
+            </div>
+            <button onclick="restartQuiz()" 
+                    class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl transition-all">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const bibleQuizzes = [
+            {
+                verse: '"For God so _______ the world that he gave his one and only Son..."',
+                answer: 'loved',
+                ref: 'John 3:16'
+            },
+            {
+                verse: '"In the beginning God _______ the heavens and the earth."',
+                answer: 'created',
+                ref: 'Genesis 1:1'
+            },
+            {
+                verse: '"I can do all this through him who gives me _______."',
+                answer: 'strength',
+                ref: 'Philippians 4:13'
+            }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+
+        const verseDisplay = document.getElementById('verse-display');
+        const answerInput = document.getElementById('answer-input');
+        const feedback = document.getElementById('feedback');
+        const progressBar = document.getElementById('progress-bar');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultContainer = document.getElementById('result-container');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        function initQuiz() {
+            currentIndex = 0;
+            score = 0;
+            quizContainer.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const currentQuiz = bibleQuizzes[currentIndex];
+            verseDisplay.innerHTML = `
+                <p class="mb-2">${currentQuiz.verse}</p>
+                <span class="text-sm font-semibold text-gray-400 not-italic">- ${currentQuiz.ref}</span>
+            `;
+            answerInput.value = '';
+            answerInput.focus();
+            feedback.textContent = '';
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const progress = (currentIndex / bibleQuizzes.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function checkAnswer() {
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const correctAnswer = bibleQuizzes[currentIndex].answer.toLowerCase();
+
+            if (userAnswer === '') return;
+
+            if (userAnswer === correctAnswer) {
+                score++;
+                feedback.textContent = "✨ Correct!";
+                feedback.className = "mt-4 text-center font-semibold text-green-500 fade-in";
+            } else {
+                feedback.textContent = `❌ Incorrect. (Answer: ${bibleQuizzes[currentIndex].answer})`;
+                feedback.className = "mt-4 text-center font-semibold text-red-500 fade-in";
+            }
+
+            // Move to next question after a short delay
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex < bibleQuizzes.length) {
+                    showQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1500);
+        }
+
+        function showResult() {
+            progressBar.style.width = '100%';
+            quizContainer.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            finalScoreDisplay.textContent = score;
+        }
+
+        function restartQuiz() {
+            initQuiz();
+        }
+
+        answerInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Start the quiz on load
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
