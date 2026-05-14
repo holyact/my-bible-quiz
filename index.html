@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Bible Quiz - NIV 10 Verses</title>
+    <title>English Bible Quiz - NIV Verses</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -73,7 +73,7 @@
             <h2 class="text-2xl font-bold">Great Job!</h2>
             <p class="text-gray-600">You've completed the quiz.</p>
             <div class="bg-blue-50 p-4 rounded-2xl">
-                <p class="text-blue-800 font-bold text-xl">Score: <span id="final-score">0</span> / <span id="total-count">10</span></p>
+                <p class="text-blue-800 font-bold text-xl">Score: <span id="final-score">0</span> / <span id="total-count">0</span></p>
             </div>
             <button onclick="restartQuiz()" 
                     class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl transition-all">
@@ -100,7 +100,7 @@
                 verse: '"I can do all this through him who gives me _______."',
                 answer: 'strength',
                 ref: 'Philippians 4:13',
-                hint: 'The quality of being physically or mentally strong'
+                hint: 'The quality of being physically or mentally strong (Starts with "S")'
             },
             {
                 verse: '"The Lord is my _______, I lack nothing."',
@@ -143,6 +143,25 @@
                 answer: 'courageous',
                 ref: 'Joshua 1:9',
                 hint: 'Brave, not deterred by danger (Starts with "C")'
+            },
+            // --- New Verses Added Below ---
+            {
+                verse: '"I can do all this through him who gives me _______."',
+                answer: 'strength',
+                ref: 'Philippians 4:13',
+                hint: 'Power or energy to do something (Starts with "S")'
+            },
+            {
+                verse: '"_______ in the Lord with all your heart."',
+                answer: 'Trust',
+                ref: 'Proverbs 3:5',
+                hint: 'To believe in the reliability or truth of someone (Starts with "T")'
+            },
+            {
+                verse: '"You are the _______ of the world."',
+                answer: 'light',
+                ref: 'Matthew 5:14',
+                hint: 'The natural agent that stimulates sight and makes things visible'
             }
         ];
 
@@ -177,7 +196,7 @@
             answerInput.value = '';
             answerInput.focus();
             feedback.textContent = '';
-            hintText.textContent = ''; // Reset hint
+            hintText.textContent = ''; 
             updateProgress();
         }
 
@@ -207,7 +226,6 @@
                 feedback.className = "mt-2 text-center font-semibold text-red-500 fade-in";
             }
 
-            // Move to next question after 1.5s
             setTimeout(() => {
                 currentIndex++;
                 if (currentIndex < bibleQuizzes.length) {
@@ -229,7 +247,6 @@
             initQuiz();
         }
 
-        // Handle Enter key
         answerInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 checkAnswer();
