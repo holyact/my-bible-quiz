@@ -29,8 +29,11 @@
         
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-blue-600 mb-2">Bible Quiz (NIV)</h1>
-            <p class="text-gray-500 text-sm">Fill in the blanks with hints</p>
+            <h1 class="text-2xl font-bold text-blue-600 mb-1">Bible Quiz (NIV)</h1>
+            <!-- 문제 수 표시 부분 추가 -->
+            <p id="question-counter" class="text-sm font-semibold text-gray-400 mb-2">Question 1 of 13</p>
+            <p class="text-gray-500 text-xs">Fill in the blanks with hints</p>
+            
             <!-- Progress Bar -->
             <div class="w-full bg-gray-200 h-2 rounded-full mt-4 overflow-hidden">
                 <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
@@ -39,12 +42,10 @@
 
         <!-- Quiz Content Section -->
         <div id="quiz-container">
-            <!-- Verse Text -->
             <div id="verse-display" class="mb-6 leading-relaxed text-lg text-gray-800 italic text-center min-h-[140px] flex flex-col justify-center">
                 <!-- Verse will be injected here -->
             </div>
 
-            <!-- Input Area -->
             <div class="space-y-4">
                 <input type="text" id="answer-input" 
                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition-colors text-center text-lg"
@@ -62,7 +63,6 @@
                 </div>
             </div>
 
-            <!-- Hint & Feedback Message -->
             <div id="hint-text" class="mt-4 text-center text-sm text-amber-600 font-medium min-h-[1.2rem]"></div>
             <div id="feedback" class="mt-2 text-center font-semibold min-h-[1.5rem]"></div>
         </div>
@@ -73,7 +73,7 @@
             <h2 class="text-2xl font-bold">Great Job!</h2>
             <p class="text-gray-600">You've completed the quiz.</p>
             <div class="bg-blue-50 p-4 rounded-2xl">
-                <p class="text-blue-800 font-bold text-xl">Score: <span id="final-score">0</span> / <span id="total-count">0</span></p>
+                <p class="text-blue-800 font-bold text-xl">Score: <span id="final-score">0</span> / <span id="total-count-result">13</span></p>
             </div>
             <button onclick="restartQuiz()" 
                     class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl transition-all">
@@ -144,7 +144,6 @@
                 ref: 'Joshua 1:9',
                 hint: 'Brave, not deterred by danger (Starts with "C")'
             },
-            // --- New Verses Added Below ---
             {
                 verse: '"I can do all this through him who gives me _______."',
                 answer: 'strength',
@@ -161,7 +160,7 @@
                 verse: '"You are the _______ of the world."',
                 answer: 'light',
                 ref: 'Matthew 5:14',
-                hint: 'The natural agent that stimulates sight and makes things visible'
+                hint: 'The natural agent that stimulates sight (Starts with "L")'
             }
         ];
 
@@ -173,15 +172,16 @@
         const feedback = document.getElementById('feedback');
         const hintText = document.getElementById('hint-text');
         const progressBar = document.getElementById('progress-bar');
+        const questionCounter = document.getElementById('question-counter');
         const quizContainer = document.getElementById('quiz-container');
         const resultContainer = document.getElementById('result-container');
         const finalScoreDisplay = document.getElementById('final-score');
-        const totalCountDisplay = document.getElementById('total-count');
+        const totalCountResult = document.getElementById('total-count-result');
 
         function initQuiz() {
             currentIndex = 0;
             score = 0;
-            totalCountDisplay.textContent = bibleQuizzes.length;
+            totalCountResult.textContent = bibleQuizzes.length;
             quizContainer.classList.remove('hidden');
             resultContainer.classList.add('hidden');
             showQuestion();
@@ -189,6 +189,9 @@
 
         function showQuestion() {
             const currentQuiz = bibleQuizzes[currentIndex];
+            // 문제 번호 업데이트
+            questionCounter.textContent = `Question ${currentIndex + 1} of ${bibleQuizzes.length}`;
+            
             verseDisplay.innerHTML = `
                 <p class="mb-2 text-xl">${currentQuiz.verse}</p>
                 <span class="text-sm font-semibold text-gray-400 not-italic">- ${currentQuiz.ref}</span>
