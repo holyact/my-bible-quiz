@@ -3,260 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Bible Quiz - NIV Verses</title>
+    <title>English Bible Quiz - Smart Version</title>
+    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- PapaParse for CSV processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .quiz-card {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%); }
+        .quiz-card { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-spinner { border: 3px solid #e2e8f0; border-top: 3px solid #6366f1; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div id="app" class="w-full max-w-md bg-white rounded-3xl quiz-card p-8 fade-in">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-blue-600 mb-1">Bible Quiz (NIV)</h1>
-            <!-- 문제 수 표시 부분 추가 -->
-            <p id="question-counter" class="text-sm font-semibold text-gray-400 mb-2">Question 1 of 13</p>
-            <p class="text-gray-500 text-xs">Fill in the blanks with hints</p>
-            
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 h-2 rounded-full mt-4 overflow-hidden">
-                <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
-            </div>
+    <div id="app" class="w-full max-w-md bg-white rounded-[2rem] quiz-card p-8 fade-in relative overflow-hidden">
+        <!-- 로딩 화면 (데이터를 가져올 때 표시) -->
+        <div id="loading-layer" class="flex flex-col items-center justify-center py-20">
+            <div class="loading-spinner mb-4"></div>
+            <p class="text-gray-500 font-medium">Loading Bible Verses...</p>
         </div>
 
-        <!-- Quiz Content Section -->
-        <div id="quiz-container">
-            <div id="verse-display" class="mb-6 leading-relaxed text-lg text-gray-800 italic text-center min-h-[140px] flex flex-col justify-center">
-                <!-- Verse will be injected here -->
-            </div>
-
-            <div class="space-y-4">
-                <input type="text" id="answer-input" 
-                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition-colors text-center text-lg"
-                       placeholder="Type the word" autocomplete="off">
-                
-                <div class="flex gap-2">
-                    <button onclick="showHint()" 
-                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-3 rounded-xl transition-all">
-                        💡 Hint
-                    </button>
-                    <button onclick="checkAnswer()" 
-                            class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all active:scale-95">
-                        Check Answer
-                    </button>
+        <!-- 메인 퀴즈 UI -->
+        <div id="main-ui" class="hidden">
+            <div class="text-center mb-8">
+                <div class="flex justify-between items-end mb-2">
+                    <h1 class="text-2xl font-black text-indigo-600">Bible Quiz ✨</h1>
+                    <span id="score-badge" class="text-sm font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">Score: 0</span>
+                </div>
+                <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-500 h-full transition-all duration-700 w-0"></div>
                 </div>
             </div>
 
-            <div id="hint-text" class="mt-4 text-center text-sm text-amber-600 font-medium min-h-[1.2rem]"></div>
-            <div id="feedback" class="mt-2 text-center font-semibold min-h-[1.5rem]"></div>
-        </div>
+            <div id="quiz-container">
+                <div id="verse-display" class="mb-8 text-lg text-gray-800 font-semibold text-center min-h-[160px] flex flex-col justify-center leading-relaxed">
+                    <!-- 구절이 표시되는 곳 -->
+                </div>
 
-        <!-- Result Screen -->
-        <div id="result-container" class="hidden text-center space-y-6">
-            <div class="text-5xl">🎉</div>
-            <h2 class="text-2xl font-bold">Great Job!</h2>
-            <p class="text-gray-600">You've completed the quiz.</p>
-            <div class="bg-blue-50 p-4 rounded-2xl">
-                <p class="text-blue-800 font-bold text-xl">Score: <span id="final-score">0</span> / <span id="total-count-result">13</span></p>
+                <div class="space-y-4">
+                    <input type="text" id="answer-input" 
+                           class="w-full border-2 border-gray-100 rounded-2xl px-4 py-4 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none transition-all text-center text-xl font-bold"
+                           placeholder="단어를 입력하세요" autocomplete="off">
+                    
+                    <div class="flex gap-3">
+                        <button onclick="showHint()" class="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold py-4 rounded-2xl transition-all border border-amber-200">
+                            💡 Hint
+                        </button>
+                        <button id="check-btn" onclick="checkAnswer()" class="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95">
+                            Check
+                        </button>
+                    </div>
+                </div>
+
+                <div id="feedback-area" class="mt-6 text-center">
+                    <p id="hint-text" class="text-sm text-amber-600 font-medium mb-2 min-h-[20px]"></p>
+                    <p id="feedback" class="font-bold text-lg min-h-[28px]"></p>
+                </div>
             </div>
-            <button onclick="restartQuiz()" 
-                    class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl transition-all">
-                Try Again
-            </button>
+
+            <!-- 결과 화면 -->
+            <div id="result-container" class="hidden text-center space-y-6 py-4">
+                <div class="py-4">
+                    <span class="text-7xl">🏆</span>
+                    <h2 class="text-2xl font-bold text-gray-800 mt-4">Great Job!</h2>
+                </div>
+                <div class="bg-indigo-600 text-white p-8 rounded-[2rem] shadow-xl shadow-indigo-100">
+                    <p class="text-indigo-100 text-xs uppercase tracking-[0.2em] font-bold mb-1">Total Score</p>
+                    <p class="text-6xl font-black"><span id="final-score">0</span><span class="text-2xl text-indigo-300 ml-2">/ <span id="total-count">0</span></span></p>
+                </div>
+                <button onclick="location.reload()" class="w-full bg-gray-900 text-white font-bold py-5 rounded-2xl hover:bg-black transition-all shadow-lg">
+                    Restart Quiz
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        const bibleQuizzes = [
-            {
-                verse: '"For God so _______ the world that he gave his one and only Son..."',
-                answer: 'loved',
-                ref: 'John 3:16',
-                hint: 'A strong feeling of deep affection (Starts with "L")'
-            },
-            {
-                verse: '"In the beginning God _______ the heavens and the earth."',
-                answer: 'created',
-                ref: 'Genesis 1:1',
-                hint: 'To make something out of nothing (Starts with "C")'
-            },
-            {
-                verse: '"I can do all this through him who gives me _______."',
-                answer: 'strength',
-                ref: 'Philippians 4:13',
-                hint: 'The quality of being physically or mentally strong (Starts with "S")'
-            },
-            {
-                verse: '"The Lord is my _______, I lack nothing."',
-                answer: 'shepherd',
-                ref: 'Psalm 23:1',
-                hint: 'A person who looks after sheep'
-            },
-            {
-                verse: '"Trust in the Lord with all your heart and lean not on your own _______."',
-                answer: 'understanding',
-                ref: 'Proverbs 3:5',
-                hint: 'The ability to comprehend something'
-            },
-            {
-                verse: '"And we know that in all things God works for the _______ of those who love him."',
-                answer: 'good',
-                ref: 'Romans 8:28',
-                hint: 'Something that is beneficial or virtuous'
-            },
-            {
-                verse: '"Therefore go and make _______ of all nations..."',
-                answer: 'disciples',
-                ref: 'Matthew 28:19',
-                hint: 'Followers or students of a teacher (Starts with "D")'
-            },
-            {
-                verse: '"For it is by _______ you have been saved, through faith..."',
-                answer: 'grace',
-                ref: 'Ephesians 2:8',
-                hint: 'The free and unmerited favor of God (Starts with "G")'
-            },
-            {
-                verse: '"So do not _______, for I am with you; do not be dismayed, for I am your God."',
-                answer: 'fear',
-                ref: 'Isaiah 41:10',
-                hint: 'To be afraid of something'
-            },
-            {
-                verse: '"Be strong and _______ . Do not be afraid; do not be discouraged..."',
-                answer: 'courageous',
-                ref: 'Joshua 1:9',
-                hint: 'Brave, not deterred by danger (Starts with "C")'
-            },
-            {
-                verse: '"I can do all this through him who gives me _______."',
-                answer: 'strength',
-                ref: 'Philippians 4:13',
-                hint: 'Power or energy to do something (Starts with "S")'
-            },
-            {
-                verse: '"_______ in the Lord with all your heart."',
-                answer: 'Trust',
-                ref: 'Proverbs 3:5',
-                hint: 'To believe in the reliability or truth of someone (Starts with "T")'
-            },
-            {
-                verse: '"You are the _______ of the world."',
-                answer: 'light',
-                ref: 'Matthew 5:14',
-                hint: 'The natural agent that stimulates sight (Starts with "L")'
-            }
+        /**
+         * 1. 구글 스프레드시트 설정
+         * 본인의 시트를 '웹에 게시(CSV)'한 후 아래 URL을 교체하세요.
+         */
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzcWVDG57dvYL48HfvFnEGJMXySqMZgIxkJGIvR83l6CTmIBo_3WL7BEXiwRjbJ_D12s3aZYofIzDZ/pub?gid=0&single=true&output=csv"; 
+
+        // 시트 로드 실패 시 사용할 백업 데이터
+        const BACKUP_DATA = [
+            { verse: "For God so loved the world that he gave his one and only _______", answer: "Son", ref: "John 3:16", hint: "S로 시작하는 단어 (아들)" },
+            { verse: "In the beginning God created the heavens and the _______", answer: "earth", ref: "Genesis 1:1", hint: "우리가 살고 있는 곳" },
+            { verse: "The LORD is my _______, I lack nothing.", answer: "shepherd", ref: "Psalm 23:1", hint: "양을 돌보는 사람" },
+            { verse: "I can do all this through him who gives me _______", answer: "strength", ref: "Philippians 4:13", hint: "힘, 능력" },
+            { verse: "Trust in the LORD with all your _______", answer: "heart", ref: "Proverbs 3:5", hint: "마음, 심장" },
+            { verse: "But seek first his kingdom and his _______", answer: "righteousness", ref: "Matthew 6:33", hint: "의, 올바름" },
+            { verse: "Your word is a lamp for my _______", answer: "feet", ref: "Psalm 119:105", hint: "발 (복수형)" },
+            { verse: "Jesus answered, 'I am the way and the truth and the _______'", answer: "life", ref: "John 14:6", hint: "생명, 삶" },
+            { verse: "And be kind to one another, _______", answer: "tenderhearted", ref: "Ephesians 4:32", hint: "친절하고 불쌍히 여기며" },
+            { verse: "Let everything that has breath _______ the LORD.", answer: "praise", ref: "Psalm 150:6", hint: "찬양하다" }
         ];
 
+        let bibleQuizzes = [];
         let currentIndex = 0;
         let score = 0;
 
+        const mainUi = document.getElementById('main-ui');
+        const loadingLayer = document.getElementById('loading-layer');
         const verseDisplay = document.getElementById('verse-display');
         const answerInput = document.getElementById('answer-input');
         const feedback = document.getElementById('feedback');
         const hintText = document.getElementById('hint-text');
         const progressBar = document.getElementById('progress-bar');
-        const questionCounter = document.getElementById('question-counter');
         const quizContainer = document.getElementById('quiz-container');
         const resultContainer = document.getElementById('result-container');
-        const finalScoreDisplay = document.getElementById('final-score');
-        const totalCountResult = document.getElementById('total-count-result');
+        const scoreBadge = document.getElementById('score-badge');
 
-        function initQuiz() {
-            currentIndex = 0;
-            score = 0;
-            totalCountResult.textContent = bibleQuizzes.length;
-            quizContainer.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-            showQuestion();
+        async function fetchSheetData() {
+            if (!SHEET_URL) {
+                console.log("No Sheet URL provided, using backup data.");
+                loadData(BACKUP_DATA);
+                return;
+            }
+
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) throw new Error("Fetch failed");
+                const csvData = await response.text();
+                
+                Papa.parse(csvData, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.data && results.data.length > 0) {
+                            loadData(results.data);
+                        } else {
+                            loadData(BACKUP_DATA);
+                        }
+                    },
+                    error: function() { loadData(BACKUP_DATA); }
+                });
+            } catch (error) {
+                console.error("Sheet loading error, using backup:", error);
+                loadData(BACKUP_DATA);
+            }
+        }
+
+        function loadData(data) {
+            bibleQuizzes = data;
+            setTimeout(() => {
+                loadingLayer.classList.add('hidden');
+                mainUi.classList.remove('hidden');
+                showQuestion();
+            }, 800);
+        }
+
+        function speakSentence(text, callback) {
+            const fullSentence = text.replace(/_______/g, bibleQuizzes[currentIndex].answer);
+            
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(fullSentence);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+
+            // 음성 재생이 끝났을 때 콜백 실행
+            utterance.onend = () => {
+                if (callback) callback();
+            };
+
+            // 음성 지원이 안 되거나 에러가 났을 때를 위한 안전장치 (5초 후 강제 실행)
+            const fallbackTimeout = setTimeout(() => {
+                if (callback) {
+                    callback();
+                    callback = null; // 중복 실행 방지
+                }
+            }, 5000);
+
+            utterance.onerror = () => {
+                clearTimeout(fallbackTimeout);
+                if (callback) callback();
+            };
+
+            window.speechSynthesis.speak(utterance);
         }
 
         function showQuestion() {
-            const currentQuiz = bibleQuizzes[currentIndex];
-            // 문제 번호 업데이트
-            questionCounter.textContent = `Question ${currentIndex + 1} of ${bibleQuizzes.length}`;
-            
+            const q = bibleQuizzes[currentIndex];
             verseDisplay.innerHTML = `
-                <p class="mb-2 text-xl">${currentQuiz.verse}</p>
-                <span class="text-sm font-semibold text-gray-400 not-italic">- ${currentQuiz.ref}</span>
+                <p class="mb-4 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Verse ${currentIndex + 1}</p>
+                <p class="mb-5 px-2 text-xl md:text-2xl">"${q.verse}"</p>
+                <span class="text-[11px] font-black text-indigo-500 bg-indigo-50 px-4 py-1.5 rounded-full uppercase tracking-wider border border-indigo-100">${q.ref}</span>
             `;
             answerInput.value = '';
+            answerInput.disabled = false;
             answerInput.focus();
+            document.getElementById('check-btn').disabled = false;
             feedback.textContent = '';
-            hintText.textContent = ''; 
-            updateProgress();
-        }
-
-        function showHint() {
-            const currentQuiz = bibleQuizzes[currentIndex];
-            hintText.textContent = `Hint: ${currentQuiz.hint}`;
-            hintText.classList.add('fade-in');
-        }
-
-        function updateProgress() {
-            const progress = (currentIndex / bibleQuizzes.length) * 100;
-            progressBar.style.width = `${progress}%`;
+            hintText.textContent = '';
+            progressBar.style.width = `${(currentIndex / bibleQuizzes.length) * 100}%`;
+            scoreBadge.textContent = `Score: ${score}`;
         }
 
         function checkAnswer() {
-            const userAnswer = answerInput.value.trim().toLowerCase();
-            const correctAnswer = bibleQuizzes[currentIndex].answer.toLowerCase();
+            const user = answerInput.value.trim().toLowerCase();
+            const correct = bibleQuizzes[currentIndex].answer.trim().toLowerCase();
+            if (!user) return;
 
-            if (userAnswer === '') return;
+            answerInput.disabled = true;
+            document.getElementById('check-btn').disabled = true;
 
-            if (userAnswer === correctAnswer) {
+            if (user === correct) {
                 score++;
-                feedback.textContent = "✨ Correct!";
-                feedback.className = "mt-2 text-center font-semibold text-green-500 fade-in";
+                feedback.innerHTML = "<span class='text-green-500'>✨ Correct!</span> Excellent.";
             } else {
-                feedback.textContent = `❌ Incorrect. (Answer: ${bibleQuizzes[currentIndex].answer})`;
-                feedback.className = "mt-2 text-center font-semibold text-red-500 fade-in";
+                feedback.innerHTML = `<span class='text-red-400'>❌ Incorrect.</span> The answer is <b class='text-red-500'>${bibleQuizzes[currentIndex].answer}</b>.`;
             }
 
-            setTimeout(() => {
-                currentIndex++;
-                if (currentIndex < bibleQuizzes.length) {
-                    showQuestion();
-                } else {
-                    showResult();
-                }
-            }, 1500);
+            // 음성 읽기를 시작하고, 읽기가 끝나면 다음 문제로 이동
+            // 문장이 너무 짧을 수도 있으니 최소 1.5초는 보여준 뒤 이동하도록 구성
+            const startTime = Date.now();
+            
+            speakSentence(bibleQuizzes[currentIndex].verse, () => {
+                const elapsedTime = Date.now() - startTime;
+                const minDisplayTime = 1500; // 최소 1.5초 대기
+                const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+
+                setTimeout(() => {
+                    currentIndex++;
+                    if (currentIndex < bibleQuizzes.length) {
+                        showQuestion();
+                    } else {
+                        showResult();
+                    }
+                }, remainingTime);
+            });
         }
 
         function showResult() {
-            progressBar.style.width = '100%';
             quizContainer.classList.add('hidden');
             resultContainer.classList.remove('hidden');
-            finalScoreDisplay.textContent = score;
+            progressBar.style.width = '100%';
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('total-count').textContent = bibleQuizzes.length;
         }
 
-        function restartQuiz() {
-            initQuiz();
+        function showHint() {
+            hintText.textContent = `💡 Hint: ${bibleQuizzes[currentIndex].hint}`;
         }
 
-        answerInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                checkAnswer();
-            }
+        answerInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter' && !answerInput.disabled) checkAnswer();
         });
 
-        window.onload = initQuiz;
+        window.onload = fetchSheetData;
     </script>
 </body>
 </html>
